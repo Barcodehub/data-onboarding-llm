@@ -1,0 +1,41 @@
+record,when,client,amount_a,amount_b,total,active,notes
+REC-001,2024-01-05,Acme Corp,4,25,100,true,First delivery
+REC-002,2024-01-09,Beta LLC,6,15,90,false,
+REC-003,2024-01-13,Gamma Inc,3,30,90,true,Rush order
+REC-004,2024-01-17,Delta SA,5,20,100,true,
+REC-005,2024-01-21,Acme Corp,8,12,96,false,Needs review
+REC-006,2024-01-25,Beta LLC,7,14,98,true,
+REC-007,2024-01-29,,2,48,96,false,
+REC-008,2024-02-02,Epsilon Ltd,9,11,99,true,Late arrival
+REC-009,2024-02-06,Delta SA,4,24,96,true,
+REC-010,2024-02-10,Acme Corp,6,16,96,false,
+REC-011,2024-02-14,Beta LLC,3,32,96,true,
+REC-012,2024-02-18,Gamma Inc,5,18,90,false,Cancelled
+REC-013,2024-02-22,Epsilon Ltd,7,14,98,true,
+REC-014,2024-02-26,,2,45,90,false,
+REC-015,2024-03-01,Acme Corp,4,25,100,true,
+REC-016,2024-03-05,Beta LLC,8,12,96,false,
+REC-017,2024-03-09,Gamma Inc,6,15,90,true,Bulk shipment
+REC-018,2024-03-13,Epsilon Ltd,5,20,100,false,
+REC-019,2024-03-17,Delta SA,3,30,90,true,Priority
+REC-020,2024-03-21,Acme Corp,9,11,99,false,
+REC-021,2024-03-25,Beta LLC,4,24,96,true,
+REC-022,2024-03-29,Gamma Inc,7,14,98,false,
+REC-023,2024-04-02,Epsilon Ltd,6,16,96,true,
+REC-024,2024-04-06,,2,48,96,false,
+REC-025,2024-04-10,Acme Corp,8,12,96,true,
+REC-026,2024-04-14,Beta LLC,5,18,90,false,
+REC-027,2024-04-18,Gamma Inc,3,30,90,true,
+REC-028,2024-04-22,Epsilon Ltd,4,25,100,false,
+REC-029,2024-04-26,Delta SA,7,14,98,true,
+REC-030,2024-04-30,Acme Corp,6,16,96,false,
+REC-031,2024-05-04,Beta LLC,9,11,99,true,
+REC-032,2024-05-08,Gamma Inc,5,20,100,false,
+REC-033,2024-05-12,Delta SA,8,12,96,true,Bulk order
+REC-034,2024-05-16,Epsilon Ltd,4,24,96,false,
+REC-035,2024-05-20,Acme Corp,3,30,90,true,
+REC-036,2024-05-24,Beta LLC,7,14,98,false,
+REC-037,2024-05-28,Gamma Inc,2,48,96,true,
+REC-038,2024-06-01,Delta SA,6,16,96,false,
+REC-005,2024-01-21,Acme Corp,8,12,96,false,Needs review
+REC-012,2024-02-18,Gamma Inc,5,18,90,false,Cancelled
