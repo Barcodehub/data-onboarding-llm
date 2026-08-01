@@ -69,3 +69,41 @@ Checkpoint notes between sessions. Format: brief and focused on
 
 - Implement `inferTypes.ts` to generate column profiles with
   inferred types and confidence scores.
+
+
+
+## 2026-07-31 — Session 2 (type inference)
+
+Completed:
+- Implemented `src/lib/analysis/inferTypes.ts`.
+- Added value-based type inference with confidence scoring.
+- Supported inferred types:
+  - id
+  - date
+  - number
+  - boolean
+  - categorical
+  - string
+  - unknown
+
+Design decisions:
+- Type inference never uses column names.
+- Confidence is calculated only from non-null values.
+- Null detection is tracked separately.
+- ID detection uses structural pattern matching instead of strict uniqueness.
+- Boolean detection runs before number to avoid 0/1 columns being misclassified.
+- Unknown is reserved for columns with insufficient classification signal.
+
+Validation:
+- Tested against `data/lakeside_orders_sample.csv`.
+- Confirmed:
+  - order_id → id
+  - cust_id → id
+  - prod_sku → id
+  - qty → number
+  - cust_name → string
+  - cust_email → string
+
+Next:
+- Implement first findings rule:
+  `missing_data`
