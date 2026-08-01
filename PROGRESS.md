@@ -1,0 +1,71 @@
+# Progress Log
+
+Checkpoint notes between sessions. Format: brief and focused on
+"what I need to know to resume work without rereading the entire codebase."
+
+---
+
+## 2026-07-31 — Session 0 (planning, no product code yet)
+
+**Completed:**
+
+- Scaffolded Vite + React + TypeScript + Tailwind project
+- Configured `.gitignore` (`node_modules`, `dist`, `.env*`)
+- Defined the three initial contracts:
+  - `src/lib/analysis/types.ts` (`Finding`, `ColumnProfile`, `AnalysisReport`)
+  - `src/lib/llm/types.ts` (`LLMNarratorRequest/Response`)
+  - `src/lib/dashboard/sections.ts` (dashboard sections and the business question each section answers)
+
+- Added the sample dataset at `data/lakeside_orders_sample.csv`.
+- Manually inspected the dataset structure and sample rows.
+  The file appears to be a valid CSV. The issue observed in Excel seems related to delimiter interpretation rather than the file itself.
+
+  Initial observations from sample rows:
+  - `order_dt`: multiple date formats detected
+  - Potential normalization issues in categorical fields:
+    - `currency`
+    - `ship_country`
+    - `ord_status`
+    - `prod_cat`
+  - `disc_pct`: mixed representations (`5%`, `0.0`, `20 %`)
+  - `csat_score`: missing values observed
+  - `line_total`: potential mismatch with `qty * unit_price`, requiring business rule validation. Candidate for a `referential_inconsistency` finding.
+
+**Decisions made:**
+
+- Use a single LLM call as a data quality narrator instead of multiple calls per column.
+  This reduces cost and avoids unnecessary opportunities for hallucination.
+- The LLM receives only the summarized `AnalysisReport`, never raw rows.
+- Findings will be implemented as pure functions to keep analysis logic testable and independent from the UI.
+
+**Next step:**
+
+- Implement `parseCsv.ts` and `inferTypes.ts`.
+- Start with the simplest finding rule (`missing_data`) to validate the full pipeline end-to-end before implementing more complex rules.
+- Implement `referential_inconsistency` later because it provides higher business value but requires more context about relationships between columns.
+
+**Nothing blocked. Nothing broken.**
+
+
+## 2026-07-31 — Session 1 (CSV parsing)
+
+**Completed:**
+
+- Implemented `src/lib/analysis/parseCsv.ts` using PapaParse.
+- Parser preserves raw cell values and only normalizes headers.
+- Added `parseErrors` collection for malformed CSV rows.
+- Validated parser against `data/lakeside_orders_sample.csv`:
+  - 1182 rows detected
+  - 22 columns detected
+  - 0 parsing errors
+
+**Decision:**
+
+- CSV parsing intentionally does not clean or normalize data.
+  Data quality issues must remain visible for the analysis engine
+  to detect later.
+
+**Next step:**
+
+- Implement `inferTypes.ts` to generate column profiles with
+  inferred types and confidence scores.

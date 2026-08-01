@@ -23,6 +23,8 @@ dist-ssr
 *.sln
 *.sw?
 
+package-lock.json
+
 cat > .gitignore << 'EOF'
 .env
 .env.local
