@@ -223,3 +223,56 @@ Next:
   and same business key with divergent data. Business key candidate
   is derived generically (highest distinctRatio among columns with
   `inferredType === "id"`), not hardcoded to any column name.
+
+  ## 2026-08-01 — Session 6 (business key selection + duplicate finding)
+
+Completed:
+- Implemented `src/lib/analysis/findings/selectBusinessKey.ts`.
+- Implemented `src/lib/analysis/findings/duplicate.ts`.
+
+Design decisions:
+- Business key selection is deterministic and value-based (never looks
+  at column names): candidates limited to `inferredType === "id"`
+  columns, excludes candidates with `nullPercentage >= 5%`, requires
+  `distinctRatio >= 0.95` to qualify, and requires a `>=0.03` margin
+  over the runner-up when multiple candidates qualify. If no candidate
+  clears the bar (or the margin is too close), the function returns
+  `null` and Check B is skipped entirely rather than guessing — a
+  false "duplicate" finding is worse than no finding.
+- `duplicate.ts` runs two independent checks: exact full-row duplicates
+  (Check A) and same business key with divergent data in other columns
+  (Check B). Check B is skipped cleanly when `selectBusinessKey`
+  returns `null`.
+- Severity: exact duplicates are `critical` if they affect >=2% of
+  rows, `warning` otherwise (near-universal signal of an ingestion
+  issue). Business key collisions are always `critical` — a repeated
+  identifier with contradictory data is structurally serious
+  regardless of volume.
+- Both checks normalize disguised-null variants (reusing
+  `isDisguisedNull` from `patterns/nulls.ts`) before comparing values,
+  so `""` vs `"N/A"` in the same column isn't misread as either a
+  non-duplicate (Check A) or a false divergence (Check B).
+
+Validation:
+- Tested against `data/lakeside_orders_sample.csv`.
+- Business key selection: `order_id` selected unambiguously
+  (`distinctRatio` 0.9729), `cust_id` (0.28) and `prod_sku` (0.61)
+  correctly excluded — they repeat by business design.
+- Check A: 40 rows / 19 groups of exact duplicates → `critical`.
+- Check B: 25 rows / 12 groups with genuine divergence → `critical`
+  (8 diverge in `qty`, 3 in `ord_status`, 1 group of 3 rows diverging
+  in `qty`).
+- Confirmed the two checks partition cleanly (19 + 12 groups, zero
+  overlap) after the normalization fix — before the fix, disguised-null
+  variants were bleeding false divergence into Check B.
+
+Next:
+- Implement `referentialInconsistency.ts` as the last findings rule
+  for now: detects a generic A × B ≈ C pattern among numeric columns
+  (not hardcoded to `qty`/`unit_price`/`line_total` by name), using
+  the `columns: string[]` field already in the `Finding` contract.
+  Expected to surface the `qty * unit_price != line_total` case found
+  during manual CSV inspection. After this, pause the analysis engine
+  and move to LLM integration + UI — outlier detection and categorical
+  casing inconsistency (e.g. `ship_country` variants) are deferred,
+  to be noted explicitly in `NOTES.md`.
