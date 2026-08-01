@@ -266,13 +266,40 @@ Validation:
   overlap) after the normalization fix — before the fix, disguised-null
   variants were bleeding false divergence into Check B.
 
+## 2026-08-01 — Session 7 (referential_inconsistency finding — analysis engine complete)
+
+Completed:
+- Implemented `src/lib/analysis/findings/referentialInconsistency.ts`.
+
+Design decisions:
+- Discovers the A × B ≈ C relationship generically across all numeric
+  columns with variance: evaluates every unordered pair (A, B) against
+  every remaining column C, selects the triplet with the highest match
+  ratio if it exceeds 70%, otherwise emits nothing.
+- Tolerance: max(0.01 absolute, 1% relative) to absorb cent-level
+  rounding without masking genuine discrepancies.
+- Degenerate columns (uniqueCount <= 1) are excluded up front to avoid
+  spurious matches against near-constant columns.
+- Severity: `critical` if affected rows >= 2%, `warning` otherwise.
+
+Validation:
+- Tested against `data/lakeside_orders_sample.csv`.
+- Detected triplet: `qty × unit_price → line_total` (as expected from
+  the initial manual inspection — confirmed without any hardcoded names).
+- Finding: `critical`, 94 rows (8.0%) where line_total ≠ qty × unit_price.
+- Sample: qty=250, unit_price=45.54 → expected 11385.00, got 14535.39
+  (discrepancy 3150.39).
+
+**Analysis engine is now complete for this phase.**
+
+Implemented findings rules:
+- `missing_data` ✓
+- `inconsistent_format` ✓ (date columns only)
+- `duplicate` ✓ (exact rows + business key collision)
+- `referential_inconsistency` ✓ (A × B ≈ C, generic)
+
 Next:
-- Implement `referentialInconsistency.ts` as the last findings rule
-  for now: detects a generic A × B ≈ C pattern among numeric columns
-  (not hardcoded to `qty`/`unit_price`/`line_total` by name), using
-  the `columns: string[]` field already in the `Finding` contract.
-  Expected to surface the `qty * unit_price != line_total` case found
-  during manual CSV inspection. After this, pause the analysis engine
-  and move to LLM integration + UI — outlier detection and categorical
-  casing inconsistency (e.g. `ship_country` variants) are deferred,
-  to be noted explicitly in `NOTES.md`.
+- Implement `src/lib/llm/narrator.ts` — single LLM call, structured
+  output against `LLMNarratorResponse`, receives `AnalysisReport` only
+  (never raw rows), narrates findings in business language and generates
+  kickoff questions for the consultant.
