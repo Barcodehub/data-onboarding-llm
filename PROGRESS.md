@@ -331,9 +331,28 @@ Validation (dry run via `_preview_narrator.ts`):
 - System prompt HARD RULE verified: all citable figures (`94 rows`,
   `8.0%`, `3.4%`, `55.2%`, etc.) appear literally in the findings JSON.
 
-Next:
-- Implement the UI (last step per CLAUDE.md). Key surfaces:
-  1. File picker → upload CSV → trigger parse + analysis pipeline
-  2. API key input (React state only, never localStorage)
-  3. Dashboard: summary cards per finding severity, findings list,
-     LLM narrative section (executiveSummary + keyRisks + kickoffQuestions)
+## 2026-08-01 — Session 9 (UI — implementation complete)
+
+Completed:
+- Replaced scaffold App.tsx/App.css with a clean single-page application.
+- State machine in App.tsx: idle → analyzing → done → error (no router).
+- `analyzing` state shows real pipeline stages with a spinner:
+  Parsing CSV → Profiling columns → Detecting issues → Generating narrative.
+- `done` state: compact sticky bar (filename, row/column counts, critical count,
+  "Analyze another file" button) + full dashboard below.
+- Components created:
+  - `src/components/UploadPanel.tsx` — drag-and-drop file zone + API key field
+  - `src/components/ProgressStages.tsx` — 4-stage indicator with done/active/pending states
+  - `src/components/Dashboard.tsx` — 5 sections following DASHBOARD_SECTIONS order:
+    Overview (executive summary), Data health (severity cards + full findings list),
+    Key risks (LLM key risks with linked finding stats), Column explorer (table),
+    Kickoff questions (numbered list)
+- Zero TypeScript errors. Dev server confirmed running at http://localhost:5173.
+
+Decisions:
+- API key is never stored — held only in UploadPanel local state, passed directly
+  to handleAnalyze, discarded after the LLM call.
+- "Analyze another file" resets to idle, which unmounts UploadPanel and re-creates
+  it fresh (no leftover file or key from prior run).
+
+Nothing blocked. Project is functionally complete per CLAUDE.md scope.
