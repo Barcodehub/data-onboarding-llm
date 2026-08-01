@@ -138,3 +138,43 @@ Validation:
 Next:
 - Implement `inconsistent_format` finding.
 - Reuse existing date detection logic instead of duplicating format rules.
+
+## 2026-08-01 — Session 4 (shared date patterns)
+
+Completed:
+- Extracted all date format detection into
+  `src/lib/analysis/patterns/dateFormats.ts`.
+- `inferTypes.ts` now reuses the shared date matcher instead of maintaining
+  its own regexes.
+- Added support for six date representations:
+  - ISO (`YYYY-MM-DD`)
+  - DD-MM-YYYY
+  - Mon DD, YYYY
+  - MM/DD/YYYY
+  - ISO DateTime (`YYYY-MM-DD HH:MM:SS`)
+  - Unix Epoch (seconds)
+
+Design decisions:
+- Date format detection now has a single source of truth that will also be
+  reused by the upcoming `inconsistent_format` finding.
+- Unix epoch detection is intentionally limited to epoch seconds and
+  validated with a year range (2000–2030) to avoid false positives from
+  large numeric identifiers.
+- DateTime values are considered valid dates rather than data quality
+  issues because they represent the same semantic type with higher
+  precision.
+
+Validation:
+- Refactored `inferTypes.ts` without changing the overall inference logic.
+- Smoke-tested against the Lakeside dataset.
+- `order_dt` classification improved:
+  - `string` (60.8%)
+  - → `date` (80.7%) after adding `MM/DD/YYYY`
+  - → `date` (100%) after supporting ISO DateTime and Unix Epoch.
+- Confirmed all observed `order_dt` values match one of the supported
+  formats.
+
+Next:
+- Implement `inconsistent_format`.
+- Reuse `matchDateFormat()` to identify mixed date formats within the same
+  column and generate findings with sample evidence.

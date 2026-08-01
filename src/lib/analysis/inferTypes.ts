@@ -1,5 +1,6 @@
 import type { ParseResult } from "./parseCsv";
 import type { ColumnProfile, InferredType } from "./types";
+import { isLikelyDateValue } from "./patterns/dateFormats";
 
 // Values treated as absent regardless of column type.
 // Comparison runs after trim() + toLowerCase(), so " ", "NULL", "N/A" etc. are all covered.
@@ -15,21 +16,6 @@ const ID_PATTERN = /^[A-Za-z][A-Za-z0-9]*-\d+$/;
 
 function isLikelyId(value: string): boolean {
   return ID_PATTERN.test(value);
-}
-
-const DATE_ISO = /^\d{4}-\d{2}-\d{2}$/;                  // 2024-03-22
-const DATE_DDMMYYYY = /^\d{2}-\d{2}-\d{4}$/;              // 30-09-2024
-const DATE_MON_DD_YYYY = /^[A-Za-z]{3} \d{1,2}, \d{4}$/; // Mar 24, 2024
-
-function isLikelyDate(value: string): boolean {
-  if (DATE_ISO.test(value)) return !isNaN(Date.parse(value));
-  if (DATE_DDMMYYYY.test(value)) {
-    const [d, m, y] = value.split("-");
-    // Reorder to ISO so Date.parse can validate the calendar date correctly
-    return !isNaN(Date.parse(`${y}-${m}-${d}`));
-  }
-  if (DATE_MON_DD_YYYY.test(value)) return !isNaN(Date.parse(value));
-  return false;
 }
 
 const BOOL_SET = new Set(["true", "false", "yes", "no", "1", "0"]);
@@ -85,7 +71,7 @@ export function inferColumnProfile(columnName: string, values: string[]): Column
   const distinctRatio = uniqueCount / n;
 
   const idRatio   = nonNullValues.filter(isLikelyId).length / n;
-  const dateRatio = nonNullValues.filter(isLikelyDate).length / n;
+  const dateRatio = nonNullValues.filter(isLikelyDateValue).length / n;
   const boolRatio = nonNullValues.filter(isLikelyBoolean).length / n;
   const numRatio  = nonNullValues.filter(isLikelyNumber).length / n;
   // Categorical confidence: 1 - distinctRatio.
