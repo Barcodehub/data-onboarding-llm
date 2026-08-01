@@ -25,8 +25,8 @@ dist-ssr
 
 package-lock.json
 
-cat > .gitignore << 'EOF'
 .env
 .env.local
-*.local
-EOF
+
+# Manual verification scripts used during development — not part of the deliverable
+scripts/dev-checks/
