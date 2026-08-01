@@ -299,7 +299,41 @@ Implemented findings rules:
 - `referential_inconsistency` ✓ (A × B ≈ C, generic)
 
 Next:
-- Implement `src/lib/llm/narrator.ts` — single LLM call, structured
-  output against `LLMNarratorResponse`, receives `AnalysisReport` only
-  (never raw rows), narrates findings in business language and generates
-  kickoff questions for the consultant.
+## 2026-08-01 — Session 8 (narrator.ts — LLM layer complete)
+
+Completed:
+- Implemented `src/lib/llm/narrator.ts`.
+
+Design decisions:
+- `LLMNarratorRequest.columns` is typed as `ColumnProfile[]` in the
+  contract (`types.ts` unchanged). Internally, narrator.ts uses a local
+  `ColumnSummary` type (`Pick<ColumnProfile, "name" | "inferredType"> &
+  { sampleValues?: string[] }`) and a `NarratorPayload` type that overrides
+  the columns field. The contract is never touched; only the JSON payload
+  is narrowed.
+- Cryptic column heuristic (`isCrypticColumnName`): triggers on columns
+  with length <= 12 AND either a known abbreviated prefix/suffix (`_cd`,
+  `_dt`, `cust_`, `prod_`, `chnl`, `pmt_`) or a vowel ratio < 30%
+  (abbreviations like `qty`, `disc_pct`). Sample values (max 3) are added
+  only for cryptic columns, keeping the payload tight.
+- findingId hallucination guard: after receiving the tool_use block, filters
+  `keyRisks` against a Set of real finding IDs from the input report.
+  Warns on each removed entry. Throws if keyRisks becomes empty while
+  critical findings are present in the input.
+- Single forced tool_use call (`tool_choice: { type: "tool", name: ... }`)
+  against `LLMNarratorResponse` shape.
+
+Validation (dry run via `_preview_narrator.ts`):
+- 16 findings detected: 4 critical, 0 warning, 12 info.
+- Payload: 8,055 characters, 15/22 columns with sample values.
+- All 4 critical findingIds present in the payload — LLM has real IDs
+  to anchor to.
+- System prompt HARD RULE verified: all citable figures (`94 rows`,
+  `8.0%`, `3.4%`, `55.2%`, etc.) appear literally in the findings JSON.
+
+Next:
+- Implement the UI (last step per CLAUDE.md). Key surfaces:
+  1. File picker → upload CSV → trigger parse + analysis pipeline
+  2. API key input (React state only, never localStorage)
+  3. Dashboard: summary cards per finding severity, findings list,
+     LLM narrative section (executiveSummary + keyRisks + kickoffQuestions)
