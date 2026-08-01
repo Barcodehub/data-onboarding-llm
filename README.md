@@ -1,76 +1,62 @@
-# React + TypeScript + Vite
+# Data Onboarding Assistant
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A browser-only tool for consultants who receive a client's CSV with no documentation and need an honest data quality assessment before the kickoff meeting. Upload the file, paste an Anthropic API key, and get a structured report: inferred column types, detected issues (missing data, duplicates, format inconsistencies, referential mismatches), and an LLM-narrated summary with business-language explanations and suggested kickoff questions.
 
-Currently, two official plugins are available:
+---
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+![Dashboard screenshot](docs/captura-onboarding.png)
 
-## React Compiler
+---
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## Installation and running
 
-## Expanding the ESLint configuration
+**Requirements:** Node.js 18 or later.
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-
+```bash
+npm install
+npm run dev
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+The app runs entirely in the browser. There is no backend.
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+---
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+## API key
+
+At analysis time, paste your Anthropic API key into the input field in the UI. The key is held only in the browser's memory for the duration of the session — it is never written to a `.env` file, never stored in `localStorage`, and never sent anywhere except directly to the Anthropic API.
+
+An Anthropic account with API access is required ([console.anthropic.com](https://console.anthropic.com)). The app makes a single call to **Claude Sonnet 4.6** via the Messages API each time an analysis is run.
+
+---
+
+## Project structure
 
 ```
-"# data-onboarding-llm" 
+src/
+├── lib/
+│   ├── analysis/          # Deterministic analysis engine (no LLM dependency)
+│   │   ├── parseCsv.ts
+│   │   ├── inferTypes.ts
+│   │   ├── patterns/      # Shared null and date-format detection
+│   │   └── findings/      # One pure function per finding rule
+│   └── llm/
+│       ├── narrator.ts    # Single structured LLM call (tool use, grounded output)
+│       └── types.ts
+├── components/            # React UI components
+data/                      # Sample CSV (Lakeside Provisions) — the app works with any reasonable CSV
+skill/                     # Reusable Claude Skill — see below
+```
+
+---
+
+## Known limitations
+
+PapaParse runs on the main thread, so the UI will freeze briefly on very large files. Outlier detection and casing-inconsistency detection for categorical columns (e.g. `"US"` / `"us"` / `"United States"`) are not implemented in this version.
+
+See [`NOTES.md`](NOTES.md) for the full list of deferred scope and documented edge cases.
+
+---
+
+## Claude Skill
+
+`skill/grounded-llm-narration/` contains a reusable Claude Skill that encodes the core design rule applied to the narrator: forcing structured output guarantees the JSON *shape*, but a separate post-call validation step in code is required to guarantee the *content* (references, figures) is anchored to the source data. See [`skill/README.md`](skill/README.md) for installation instructions.
