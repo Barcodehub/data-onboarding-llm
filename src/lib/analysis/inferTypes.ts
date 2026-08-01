@@ -1,14 +1,7 @@
 import type { ParseResult } from "./parseCsv";
 import type { ColumnProfile, InferredType } from "./types";
 import { isLikelyDateValue } from "./patterns/dateFormats";
-
-// Values treated as absent regardless of column type.
-// Comparison runs after trim() + toLowerCase(), so " ", "NULL", "N/A" etc. are all covered.
-const DISGUISED_NULL_SET = new Set(["", "n/a", "na", "n/d", "null", "-", "--"]);
-
-function isDisguisedNull(raw: string): boolean {
-  return DISGUISED_NULL_SET.has(raw.trim().toLowerCase());
-}
+import { isDisguisedNull } from "./patterns/nulls";
 
 // Generic prefix-number pattern: one-or-more alphanumeric prefix, dash, one-or-more digits.
 // Matches ORD-001, SKU-42, CUST-10164 without hardcoding any specific prefix.

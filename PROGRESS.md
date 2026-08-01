@@ -178,3 +178,48 @@ Next:
 - Implement `inconsistent_format`.
 - Reuse `matchDateFormat()` to identify mixed date formats within the same
   column and generate findings with sample evidence.
+
+## 2026-08-01 — Session 5 (inconsistent_format finding + shared null detection)
+
+Completed:
+- Implemented `src/lib/analysis/findings/inconsistentFormat.ts`.
+- Extracted `DISGUISED_NULL_SET` into `src/lib/analysis/patterns/nulls.ts`
+  as a single source of truth, replacing duplicated copies in
+  `inferTypes.ts` and the new finding (same principle applied earlier
+  to date formats).
+
+Design decisions:
+- Scope limited to columns with `inferredType === "date"` for this
+  version (categorical casing inconsistencies like `ship_country`
+  variants are deferred to a separate rule, not mixed into this one).
+- Severity escalation: findings involving "Unix Epoch (seconds)" or
+  "ISO DateTime" are escalated above plain date-style mismatches —
+  critical if these formats combined represent >=10% of values,
+  otherwise escalated one level with a warning floor. Rationale: these
+  formats break naive column reads more severely than a stylistic
+  date-format difference.
+- `sampleEvidence` intentionally breaks from the `missing_data`
+  convention (generic message) and includes real raw values instead,
+  prioritizing severe formats first — concrete evidence adds real
+  credibility here at no extra cost.
+
+Known limitation (documented, not fixed):
+- Unrecognized values (`typeConfidence < 100%`) count toward
+  `affectedRowCount` but aren't broken out in the description text —
+  percentages listed may not sum to 100% on a CSV where this occurs.
+  Doesn't manifest on the current dataset (`order_dt` is 100% recognized).
+
+Validation:
+- Tested against `data/lakeside_orders_sample.csv`.
+- `order_dt` → 1 finding, severity `critical`, 55.2% affected, 6 formats
+  detected, `sampleEvidence` correctly leads with ISO DateTime and Unix
+  Epoch examples.
+- `ship_dt` → no finding (100% ISO, single format — correct, no noise).
+- Refactor of null detection into `patterns/nulls.ts` verified to produce
+  identical output before/after (pure extraction, no behavior change).
+
+Next:
+- Implement `duplicate.ts` with two sub-checks: exact duplicate rows,
+  and same business key with divergent data. Business key candidate
+  is derived generically (highest distinctRatio among columns with
+  `inferredType === "id"`), not hardcoded to any column name.
