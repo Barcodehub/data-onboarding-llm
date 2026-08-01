@@ -107,3 +107,34 @@ Validation:
 Next:
 - Implement first findings rule:
   `missing_data`
+
+
+## 2026-07-31 — Session 3 (missing_data finding)
+
+Completed:
+- Implemented `src/lib/analysis/findings/missingData.ts`.
+- Added the first data quality finding rule.
+- The rule operates only on `ColumnProfile[]` and does not access raw rows.
+
+Design decisions:
+- Missing data severity:
+  - `critical`: any missing value in an inferred `id` column
+  - `warning`: null percentage >= 30%
+  - `info`: null percentage > 0% and below 30%
+  - no finding when null percentage is 0%
+- `totalRows` is passed explicitly to the rule instead of being reconstructed
+  from `nullCount` and `nullPercentage`.
+- Row-level evidence is not tracked yet because ColumnProfile stores
+  aggregates only. Detailed evidence will be reserved for findings where it
+  provides more value.
+
+Validation:
+- Tested against `data/lakeside_orders_sample.csv`.
+- Generated 12 `missing_data` findings.
+- Confirmed:
+  - `csat_score` produces an `info` finding at 13.6% missing values.
+  - No false `critical` findings were generated for ID columns.
+
+Next:
+- Implement `inconsistent_format` finding.
+- Reuse existing date detection logic instead of duplicating format rules.
